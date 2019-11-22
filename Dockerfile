@@ -7,10 +7,12 @@ RUN apt-get update \
 
 FROM ubuntu:bionic-20190612
 
-LABEL maintainer="sameer@damagehead.com"
+LABEL maintainer="eyes.left@qq.com"
 
 ENV BIND_USER=bind \
     BIND_VERSION=9.11.3 \
+    PROFTP_VERSION=1.3.5e-1build1 \
+    PROFTP_USER=ftpuser \
     WEBMIN_VERSION=1.9 \
     DATA_DIR=/data
 
@@ -22,6 +24,7 @@ RUN rm -rf /etc/apt/apt.conf.d/docker-gzip-indexes \
  && apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       bind9=1:${BIND_VERSION}* bind9-host=1:${BIND_VERSION}* dnsutils \
+      proftpd-basic=${PROFTP_VERSION}* \
       webmin=${WEBMIN_VERSION}* \
  && rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +32,7 @@ COPY entrypoint.sh /sbin/entrypoint.sh
 
 RUN chmod 755 /sbin/entrypoint.sh
 
-EXPOSE 53/udp 53/tcp 10000/tcp
+EXPOSE 53/udp 53/tcp 10000/tcp 22/tcp 21/tcp
 
 ENTRYPOINT ["/sbin/entrypoint.sh"]
 

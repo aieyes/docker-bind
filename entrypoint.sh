@@ -24,12 +24,38 @@ file_env() {
 }
 
 file_env 'ROOT_PASSWORD'
+file_env 'FTPUSER_PASSWORD'
 
 ROOT_PASSWORD=${ROOT_PASSWORD:-password}
 WEBMIN_ENABLED=${WEBMIN_ENABLED:-true}
 
 BIND_DATA_DIR=${DATA_DIR}/bind
 WEBMIN_DATA_DIR=${DATA_DIR}/webmin
+PROFTP_DATA_DIR=${DATA_DIR}/proftpd
+FTPUSER_PASSWORD=${FTPUSER_PASSWORD:-ftpuser}
+
+create_proftpd_data_dir() {
+
+  # ftp root dir
+  mkdir -p ${PROFTP_DATA_DIR}
+
+  # populate default proftpd configuration if it does not exist
+  if [ ! -d ${PROFTP_DATA_DIR}/etc ]; then
+    mv /etc/proftpd ${PROFTP_DATA_DIR}/etc
+  fi
+  rm -rf /etc/proftpd
+  ln -sf ${PROFTP_DATA_DIR}/etc /etc/proftpd
+  chmod -R 0775 ${PROFTP_DATA_DIR}
+  chown -R ${PROFTP_USER}:${PROFTP_USER} ${PROFTP_DATA_DIR}
+
+  # make data dir
+  if [ ! -d ${PROFTP_DATA_DIR}/data ]; then
+    mkdir -p ${PROFTP_DATA_DIR}/data
+    usermod -m -d ${PROFTP_DATA_DIR}/data ${PROFTP_USER}
+    #chown ${PROFTP_USER}:${PROFTP_USER} ${PROFTP_DATA_DIR}/data
+  fi
+  usermod -m -d ${PROFTP_DATA_DIR}/data ${PROFTP_USER} || echo "usermod ftpuser"
+}
 
 create_bind_data_dir() {
   mkdir -p ${BIND_DATA_DIR}
@@ -68,7 +94,12 @@ set_root_passwd() {
   echo "root:$ROOT_PASSWORD" | chpasswd
 }
 
-create_pid_dir() {
+create_proftpd_user() {
+  useradd ${PROFTP_USER} || echo "$PROFTP_USER already exists."
+  echo "$PROFTP_USER:$FTPUSER_PASSWORD" | chpasswd
+}
+
+create_named_pid_dir() {
   mkdir -m 0775 -p /var/run/named
   chown root:${BIND_USER} /var/run/named
 }
@@ -78,9 +109,18 @@ create_bind_cache_dir() {
   chown root:${BIND_USER} /var/cache/bind
 }
 
-create_pid_dir
+create_proftpd_pid_dir() {
+  mkdir -m 0775 -p /var/run/proftpd
+  chown root:${PROFTP_USER} /var/run/proftpd
+}
+
+create_named_pid_dir
 create_bind_data_dir
 create_bind_cache_dir
+
+create_proftpd_user
+create_proftpd_pid_dir
+create_proftpd_data_dir
 
 # allow arguments to be passed to named
 if [[ ${1:0:1} = '-' ]]; then
@@ -102,6 +142,9 @@ if [[ -z ${1} ]]; then
 
   echo "Starting named..."
   exec $(which named) -u ${BIND_USER} -g ${EXTRA_ARGS}
+
+  echo "Starting proftpd"
+  exec $(which proftpd) -u ${PROFTP_USER} -g ${EXTRA_ARGS}
 else
   exec "$@"
 fi

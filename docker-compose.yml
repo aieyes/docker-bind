@@ -3,10 +3,12 @@ version: '2'
 services:
   bind:
     restart: always
-    image: sameersbn/bind:9.11.3-20190706
+    image: omofresh/bindftp:9.12.0-20191122
     ports:
     - "53:53/udp"
     - "53:53/tcp"
     - "10000:10000/tcp"
+    - "22:22/tcp"
+    - "21:21/tcp"
     volumes:
     - /srv/docker/bind:/data
