@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  bind:
+  bindftp:
     restart: always
     image: omofresh/bindftp:9.12.0-20191122
     ports:
@@ -11,4 +11,4 @@ services:
     - "22:22/tcp"
     - "21:21/tcp"
     volumes:
-    - /srv/docker/bind:/data
+    - /srv/docker/bindftp:/data

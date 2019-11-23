@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: bind
+  name: bindftp
   labels:
-    name: bind
+    name: bindftp
 spec:
   containers:
-    - name: bind
+    - name: bindftp
       image: omofresh/bindftp
       env:
         - name: WEBMIN_ENABLED

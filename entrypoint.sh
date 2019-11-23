@@ -34,6 +34,11 @@ WEBMIN_DATA_DIR=${DATA_DIR}/webmin
 PROFTP_DATA_DIR=${DATA_DIR}/proftpd
 FTPUSER_PASSWORD=${FTPUSER_PASSWORD:-ftpuser}
 
+# ProFTPD files
+FTPD_BIN=/usr/sbin/proftpd
+FTPD_CONF=/etc/proftpd/proftpd.conf
+PIDFILE=/var/run/proftpd.pid
+
 create_proftpd_data_dir() {
 
   # ftp root dir
@@ -109,18 +114,37 @@ create_bind_cache_dir() {
   chown root:${BIND_USER} /var/cache/bind
 }
 
-create_proftpd_pid_dir() {
-  mkdir -m 0775 -p /var/run/proftpd
-  chown root:${PROFTP_USER} /var/run/proftpd
-}
-
 create_named_pid_dir
 create_bind_data_dir
 create_bind_cache_dir
 
 create_proftpd_user
-create_proftpd_pid_dir
 create_proftpd_data_dir
+
+start_proftpd() {
+  if [ -f $PIDFILE ]; then
+   pid=`cat $PIDFILE`
+  fi
+
+  if [ ! -x $FTPD_BIN ]; then
+    echo "$0: $FTPD_BIN: cannot execute"
+    exit 1
+  fi
+
+  if [ -n "$pid" ]; then
+    echo "$0: proftpd [PID $pid] already running"
+    exit
+  fi
+
+  if [ -r $FTPD_CONF ]; then
+    echo "Starting proftpd..."
+
+    $FTPD_BIN -c $FTPD_CONF
+
+  else
+    echo "$0: cannot start proftpd -- $FTPD_CONF missing"
+  fi
+}
 
 # allow arguments to be passed to named
 if [[ ${1:0:1} = '-' ]]; then
@@ -140,11 +164,12 @@ if [[ -z ${1} ]]; then
     /etc/init.d/webmin start
   fi
 
+  echo "Starting proftpd..."
+  start_proftpd
+
   echo "Starting named..."
   exec $(which named) -u ${BIND_USER} -g ${EXTRA_ARGS}
 
-  echo "Starting proftpd"
-  exec $(which proftpd) -u ${PROFTP_USER} -g ${EXTRA_ARGS}
 else
   exec "$@"
 fi
