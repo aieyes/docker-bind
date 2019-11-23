@@ -133,7 +133,6 @@ start_proftpd() {
 
   if [ -n "$pid" ]; then
     echo "$0: proftpd [PID $pid] already running"
-    exit
   fi
 
   if [ -r $FTPD_CONF ]; then
