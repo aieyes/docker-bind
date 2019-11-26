@@ -1,4 +1,4 @@
 all: build
 
 build:
-	@docker build --tag=omofresh/bindftp .
+	@docker build --tag=aieyes/locserver .

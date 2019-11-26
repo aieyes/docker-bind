@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: bindftp
+  name: locserver
   labels:
-    name: bindftp
+    name: locserver
 spec:
   containers:
-    - name: bindftp
-      image: omofresh/bindftp
+    - name: locserver
+      image: aieyes/locserver
       env:
         - name: WEBMIN_ENABLED
           value: false

@@ -33,6 +33,7 @@ BIND_DATA_DIR=${DATA_DIR}/bind
 WEBMIN_DATA_DIR=${DATA_DIR}/webmin
 PROFTP_DATA_DIR=${DATA_DIR}/proftpd
 FTPUSER_PASSWORD=${FTPUSER_PASSWORD:-ftpuser}
+NGINX_DATA_DIR=${DATA_DIR}/nginx
 
 # ProFTPD files
 FTPD_BIN=/usr/sbin/proftpd
@@ -82,6 +83,19 @@ create_bind_data_dir() {
   ln -sf ${BIND_DATA_DIR}/lib /var/lib/bind
 }
 
+create_nginx_data_dir() {
+  mkdir -p ${NGINX_DATA_DIR}
+  chmod -R 0755 ${NGINX_DATA_DIR}
+  chown -R root:root ${NGINX_DATA_DIR}
+
+  # populate the default webmin configuration if it does not exist
+  if [ ! -d ${NGINX_DATA_DIR}/etc ]; then
+    mv /etc/nginx ${NGINX_DATA_DIR}/etc
+  fi
+  rm -rf /etc/nginx
+  ln -sf ${NGINX_DATA_DIR}/etc /etc/nginx
+}
+
 create_webmin_data_dir() {
   mkdir -p ${WEBMIN_DATA_DIR}
   chmod -R 0755 ${WEBMIN_DATA_DIR}
@@ -120,6 +134,8 @@ create_bind_cache_dir
 
 create_proftpd_user
 create_proftpd_data_dir
+
+create_nginx_data_dir
 
 start_proftpd() {
   if [ -f $PIDFILE ]; then
@@ -163,8 +179,10 @@ if [[ -z ${1} ]]; then
     /etc/init.d/webmin start
   fi
 
-  echo "Starting proftpd..."
   start_proftpd
+
+  echo "Starting nginx..."
+  /etc/init.d/nginx start
 
   echo "Starting named..."
   exec $(which named) -u ${BIND_USER} -g ${EXTRA_ARGS}
